@@ -1,19 +1,28 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="字典名称" prop="dictName">
+      <el-form-item label="厂家名称" prop="facName">
         <el-input
-          v-model="queryParams.dictName"
-          placeholder="请输入字典名称"
+          v-model="queryParams.facName"
+          placeholder="请输入厂家名称"
           clearable
           style="width: 240px"
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="字典类型" prop="dictType">
+      <el-form-item label="关键字" prop="facKey">
         <el-input
-          v-model="queryParams.dictType"
-          placeholder="请输入字典类型"
+          v-model="queryParams.facKey"
+          placeholder="请输入关键字"
+          clearable
+          style="width: 240px"
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
+      <el-form-item label="厂家电话" prop="facTel">
+        <el-input
+          v-model="queryParams.facTel"
+          placeholder="请输入厂家电话"
           clearable
           style="width: 240px"
           @keyup.enter.native="handleQuery"
@@ -22,7 +31,7 @@
       <el-form-item label="状态" prop="status">
         <el-select
           v-model="queryParams.status"
-          placeholder="字典状态"
+          placeholder="状态"
           clearable
           style="width: 240px"
         >
@@ -91,21 +100,17 @@
 
     <el-table v-loading="loading" :data="typeList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="字典编号" align="center" prop="dictId" />
-      <el-table-column label="字典名称" align="center" prop="dictName" :show-overflow-tooltip="true" />
-      <el-table-column label="字典类型" align="center" :show-overflow-tooltip="true">
-        <template slot-scope="scope">
-          <router-link :to="'/system/dict-data/index/' + scope.row.dictId" class="link-type">
-            <span>{{ scope.row.dictType }}</span>
-          </router-link>
-        </template>
-      </el-table-column>
+      <el-table-column label="厂家Id" align="center" prop="facId" />
+      <el-table-column label="厂家名称" align="center" prop="facName" :show-overflow-tooltip="true" />
+      <el-table-column label="厂家编码" align="center" prop="facCode" :show-overflow-tooltip="true" />
+      <el-table-column label="联系人" align="center" prop="facContact" :show-overflow-tooltip="true" />
+      <el-table-column label="电话" align="center" prop="facTel" :show-overflow-tooltip="true" />
+      <el-table-column label="关键字" align="center" prop="facKey" :show-overflow-tooltip="true" />
       <el-table-column label="状态" align="center" prop="status">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status"/>
         </template>
       </el-table-column>
-      <el-table-column label="备注" align="center" prop="remark" :show-overflow-tooltip="true" />
       <el-table-column label="创建时间" align="center" prop="createTime" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
@@ -142,11 +147,23 @@
     <!-- 添加或修改参数配置对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="字典名称" prop="dictName">
-          <el-input v-model="form.dictName" placeholder="请输入字典名称" />
+        <el-form-item label="厂家名称" prop="facName">
+          <el-input v-model="form.facName" placeholder="请输入厂家名称" />
         </el-form-item>
-        <el-form-item label="字典类型" prop="dictType">
-          <el-input v-model="form.dictType" placeholder="请输入字典类型" />
+        <el-form-item label="厂家编码" prop="facCode">
+          <el-input v-model="form.facCode" placeholder="请输入厂家编码" />
+        </el-form-item>
+        <el-form-item label="联系人" prop="facContact">
+          <el-input v-model="form.facContact" placeholder="请输入联系人" />
+        </el-form-item>
+        <el-form-item label="电话" prop="facTel">
+          <el-input v-model="form.facTel" placeholder="请输入电话"></el-input>
+        </el-form-item>
+        <el-form-item label="关键字" prop="facKey">
+          <el-input v-model="form.facKey" placeholder="请输入关键字"></el-input>
+        </el-form-item>
+        <el-form-item label="地址" prop="facAddress">
+          <el-input v-model="form.facAddress" placeholder="请输入地址"></el-input>
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
@@ -156,9 +173,6 @@
               :label="dict.value"
             >{{dict.label}}</el-radio>
           </el-radio-group>
-        </el-form-item>
-        <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" placeholder="请输入内容"></el-input>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -170,7 +184,7 @@
 </template>
 
 <script>
-import { listType, getType, delType, addType, updateType, refreshCache } from "@/api/system/dict/type";
+import { listFactory, getFactory, delFactory, addFactory, updateFactory, refreshCache } from "@/api/his/drug_inventory";
 
 export default {
   name: "Dict",
@@ -209,11 +223,14 @@ export default {
       form: {},
       // 表单校验
       rules: {
-        dictName: [
-          { required: true, message: "字典名称不能为空", trigger: "blur" }
+        facName: [
+          { required: true, message: "厂家名称不能为空", trigger: "blur" }
         ],
-        dictType: [
-          { required: true, message: "字典类型不能为空", trigger: "blur" }
+        facCode: [
+          { required: true, message: "厂家编码不能为空", trigger: "blur" }
+        ],
+        facContact: [
+          { required: true, message: "联系人不能为空", trigger: "blur" }
         ]
       }
     };
@@ -222,10 +239,10 @@ export default {
     this.getList();
   },
   methods: {
-    /** 查询字典类型列表 */
+    /** 查询厂家列表 */
     getList() {
       this.loading = true;
-      listType(this.addDateRange(this.queryParams, this.dateRange)).then(response => {
+      listFactory(this.addDateRange(this.queryParams, this.dateRange)).then(response => {
           this.typeList = response.rows;
           this.total = response.total;
           this.loading = false;
@@ -263,36 +280,36 @@ export default {
     handleAdd() {
       this.reset();
       this.open = true;
-      this.title = "添加字典类型";
+      this.title = "添加厂家";
     },
     // 多选框选中数据
     handleSelectionChange(selection) {
-      this.ids = selection.map(item => item.dictId)
+      this.ids = selection.map(item => item.facId);
       this.single = selection.length!=1
       this.multiple = !selection.length
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
       this.reset();
-      const dictId = row.dictId || this.ids
-      getType(dictId).then(response => {
+      const facId = row.facId || this.ids;
+      getFactory(facId).then(response => {
         this.form = response.data;
         this.open = true;
-        this.title = "修改字典类型";
+        this.title = "修改厂家";
       });
     },
     /** 提交按钮 */
     submitForm: function() {
       this.$refs["form"].validate(valid => {
         if (valid) {
-          if (this.form.dictId != undefined) {
-            updateType(this.form).then(response => {
+          if (this.form.facId != undefined) {
+            updateFactory(this.form).then(response => {
               this.$modal.msgSuccess("修改成功");
               this.open = false;
               this.getList();
             });
           } else {
-            addType(this.form).then(response => {
+            addFactory(this.form).then(response => {
               this.$modal.msgSuccess("新增成功");
               this.open = false;
               this.getList();
@@ -303,9 +320,9 @@ export default {
     },
     /** 删除按钮操作 */
     handleDelete(row) {
-      const dictIds = row.dictId || this.ids;
-      this.$modal.confirm('是否确认删除字典编号为"' + dictIds + '"的数据项？').then(function() {
-        return delType(dictIds);
+      const facIds = row.facId || this.ids;
+      this.$modal.confirm('是否确认删除厂家Id为"' + facIds + '"的数据项？').then(function() {
+        return delFactory(facIds);
       }).then(() => {
         this.getList();
         this.$modal.msgSuccess("删除成功");
